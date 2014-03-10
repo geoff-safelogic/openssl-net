@@ -847,8 +847,13 @@ namespace OpenSSL.SSL
 			uint bytesPending = write_bio.BytesPending;
 			//!!while (bytesPending > 0)
 			{
-				ArraySegment<byte> buf = write_bio.ReadBytes((int)bytesPending);
-				innerStream.BeginWrite(buf.Array, 0, buf.Count, new AsyncCallback(InternalWriteCallback), asyncResult);
+                if( bytesPending > 0)
+				{
+                    ArraySegment<byte> buf = write_bio.ReadBytes((int)bytesPending);
+				    innerStream.BeginWrite(buf.Array, 0, buf.Count, new AsyncCallback(InternalWriteCallback), asyncResult);
+                }
+                else
+                    innerStream.BeginWrite(new byte[0], 0, 0, new AsyncCallback(InternalWriteCallback), asyncResult);
 				//!!bytesPending = write_bio.BytesPending;
 			}
 		}

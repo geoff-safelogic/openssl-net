@@ -38,6 +38,11 @@ namespace OpenSSL.Core
 	/// </summary>
 	public abstract class Base : IDisposable
 	{
+        protected Base()
+        {
+            
+        }
+
 		/// <summary>
 		/// Constructor which takes the raw unmanged pointer. 
 		/// This is the only way to construct this object and all dervied types.

@@ -348,6 +348,11 @@ namespace OpenSSL.Crypto
 		/// </summary>
 		public static Cipher AES_128_OFB = new Cipher(Native.EVP_aes_128_ofb(), false);
 
+        /// <summary>
+        /// EVP_aes_128_xts()
+        /// </summary>
+        public static Cipher AES_128_XTS = new Cipher(Native.EVP_aes_128_xts(), false);
+
 		/// <summary>
 		/// EVP_aes_192_ecb()
 		/// </summary>
@@ -407,6 +412,11 @@ namespace OpenSSL.Crypto
 		/// EVP_aes_256_ofb()
 		/// </summary>
 		public static Cipher AES_256_OFB = new Cipher(Native.EVP_aes_256_ofb(), false);
+
+        /// <summary>
+        /// EVP_aes_256_xts()
+        /// </summary>
+        public static Cipher AES_256_XTS = new Cipher(Native.EVP_aes_256_xts(), false);
 		
 		#endregion
 
@@ -500,39 +510,222 @@ namespace OpenSSL.Crypto
 		public byte[] Data;
 	}
 
+    public class EncryptCipherContext : Base, IDisposable
+    {
+        private Cipher cipher;
+
+        public EncryptCipherContext(Cipher cipher, byte[] key, byte[] iv, int padding)
+		{
+		    this.ptr = Native.EVP_CIPHER_CTX_new();
+		    this.owner = true;
+            this.OnNewHandle(this.ptr);
+			this.cipher = cipher;
+
+            byte[] real_key = SetupKey(key);
+            byte[] real_iv = SetupIV(iv);
+
+            Native.ExpectSuccess(Native.EVP_EncryptInit_ex(
+                    this.ptr, this.cipher.Handle, IntPtr.Zero, null, null));
+
+            Native.ExpectSuccess(Native.EVP_CIPHER_CTX_set_key_length(this.ptr, real_key.Length));
+
+            if( padding >= 0 )
+                Native.ExpectSuccess(Native.EVP_CIPHER_CTX_set_padding(this.ptr, padding));
+
+            if ((this.cipher.Flags & Native.EVP_CIPH_MODE) == Native.EVP_CIPH_STREAM_CIPHER)
+            {
+                for (int i = 0; i < Math.Min(real_key.Length, iv.Length); i++)
+                {
+                    real_key[i] ^= iv[i];
+                }
+
+                Native.ExpectSuccess(Native.EVP_EncryptInit_ex(
+                    this.ptr, this.cipher.Handle, IntPtr.Zero, real_key, null));
+            }
+            else
+            {
+                Native.ExpectSuccess(Native.EVP_EncryptInit_ex(
+                    this.ptr, this.cipher.Handle, IntPtr.Zero, real_key, real_iv));
+            }
+		}
+
+        public byte[] Encrypt(byte[] input, int count)
+        {
+            return Encrypt(input, null, count);
+        }
+
+        public byte[] Encrypt(byte[] input, byte[] iv, int count)
+        {
+            int total = Math.Max(count, this.cipher.BlockSize);
+
+            byte[] buf = new byte[total];
+            MemoryStream memory = new MemoryStream(total);
+
+            Native.ExpectSuccess(Native.EVP_EncryptInit_ex(
+                this.ptr, IntPtr.Zero, IntPtr.Zero, null, iv));
+
+            int len = 0;
+            Native.ExpectSuccess(Native.EVP_EncryptUpdate(this.ptr, buf, out len, input, count));
+
+            memory.Write(buf, 0, len);
+
+            len = buf.Length;
+            Native.EVP_EncryptFinal_ex(this.ptr, buf, ref len);
+
+            memory.Write(buf, 0, len);
+
+            return memory.ToArray();
+        }
+
+        private byte[] SetupKey(byte[] key)
+        {
+            if (key == null)
+            {
+                key = new byte[this.cipher.KeyLength];
+                key.Initialize();
+                return key;
+            }
+
+            if (this.cipher.KeyLength == key.Length)
+            {
+                return key;
+            }
+
+            byte[] real_key = new byte[this.cipher.KeyLength];
+            real_key.Initialize();
+            Buffer.BlockCopy(key, 0, real_key, 0, Math.Min(key.Length, real_key.Length));
+            return real_key;
+        }
+
+        private byte[] SetupIV(byte[] iv)
+        {
+            if (this.cipher.IVLength > iv.Length)
+            {
+                byte[] ret = new byte[this.cipher.IVLength];
+                ret.Initialize();
+                Buffer.BlockCopy(iv, 0, ret, 0, iv.Length);
+                return ret;
+            }
+            return iv;
+        }
+
+        protected override void OnDispose()
+        {
+            Native.EVP_CIPHER_CTX_free(this.ptr);
+        }
+    }
+
+    public class DecryptCipherContext : Base, IDisposable
+    {
+        private Cipher cipher;
+
+        public DecryptCipherContext(Cipher cipher, byte[] key, byte[] iv, int padding)
+        {
+            this.ptr = Native.EVP_CIPHER_CTX_new();
+            this.owner = true;
+            this.OnNewHandle(this.ptr);
+            this.cipher = cipher;
+
+            byte[] real_key = SetupKey(key);
+            byte[] real_iv = SetupIV(iv);
+
+            Native.ExpectSuccess(Native.EVP_DecryptInit_ex(
+                    this.ptr, this.cipher.Handle, IntPtr.Zero, null, null));
+
+            Native.ExpectSuccess(Native.EVP_CIPHER_CTX_set_key_length(this.ptr, real_key.Length));
+
+            if( padding >= 0 )
+                Native.ExpectSuccess(Native.EVP_CIPHER_CTX_set_padding(this.ptr, padding));
+
+            if ((this.cipher.Flags & Native.EVP_CIPH_MODE) == Native.EVP_CIPH_STREAM_CIPHER)
+            {
+                for (int i = 0; i < Math.Min(real_key.Length, iv.Length); i++)
+                {
+                    real_key[i] ^= iv[i];
+                }
+
+                Native.ExpectSuccess(Native.EVP_DecryptInit_ex(
+                    this.ptr, this.cipher.Handle, IntPtr.Zero, real_key, null));
+            }
+            else
+            {
+                Native.ExpectSuccess(Native.EVP_DecryptInit_ex(
+                    this.ptr, this.cipher.Handle, IntPtr.Zero, real_key, real_iv));
+            }
+        }
+
+        public byte[] Decrypt(byte[] input, int count)
+        {
+            return Decrypt(input, null, count);
+        }
+
+        public byte[] Decrypt(byte[] input, byte[] iv, int count)
+        {
+            int total = Math.Max(count, this.cipher.BlockSize);
+
+            byte[] buf = new byte[total];
+            MemoryStream memory = new MemoryStream(total);
+
+            Native.ExpectSuccess(Native.EVP_DecryptInit_ex(
+                this.ptr, IntPtr.Zero, IntPtr.Zero, null, iv));
+
+            int len = 0;
+            Native.ExpectSuccess(Native.EVP_DecryptUpdate(this.ptr, buf, out len, input, count));
+
+            memory.Write(buf, 0, len);
+
+            len = buf.Length;
+            Native.EVP_DecryptFinal_ex(this.ptr, buf, ref len);
+
+            memory.Write(buf, 0, len);
+
+            return memory.ToArray();
+        }
+
+        private byte[] SetupKey(byte[] key)
+        {
+            if (key == null)
+            {
+                key = new byte[this.cipher.KeyLength];
+                key.Initialize();
+                return key;
+            }
+
+            if (this.cipher.KeyLength == key.Length)
+            {
+                return key;
+            }
+
+            byte[] real_key = new byte[this.cipher.KeyLength];
+            real_key.Initialize();
+            Buffer.BlockCopy(key, 0, real_key, 0, Math.Min(key.Length, real_key.Length));
+            return real_key;
+        }
+
+        private byte[] SetupIV(byte[] iv)
+        {
+            if (this.cipher.IVLength > iv.Length)
+            {
+                byte[] ret = new byte[this.cipher.IVLength];
+                ret.Initialize();
+                Buffer.BlockCopy(iv, 0, ret, 0, iv.Length);
+                return ret;
+            }
+            return iv;
+        }
+
+        protected override void OnDispose()
+        {
+            Native.EVP_CIPHER_CTX_free(this.ptr);
+        }
+    }
+
 	/// <summary>
 	/// Wraps the EVP_CIPHER_CTX object.
 	/// </summary>
 	public class CipherContext : Base, IDisposable
 	{
-		#region EVP_CIPHER_CTX
-		[StructLayout(LayoutKind.Sequential)]
-		struct EVP_CIPHER_CTX
-		{
-			public IntPtr cipher;
-			public IntPtr engine;	/* functional reference if 'cipher' is ENGINE-provided */
-			public int encrypt;		/* encrypt or decrypt */
-			public int buf_len;		/* number we have left */
-
-			[MarshalAs(UnmanagedType.ByValArray, SizeConst = Native.EVP_MAX_IV_LENGTH)]
-			public byte[] oiv;	/* original iv */
-			[MarshalAs(UnmanagedType.ByValArray, SizeConst = Native.EVP_MAX_IV_LENGTH)]
-			public byte[] iv;	/* working iv */
-			[MarshalAs(UnmanagedType.ByValArray, SizeConst = Native.EVP_MAX_BLOCK_LENGTH)]
-			public byte[] buf;/* saved partial block */
-			public int num;				/* used by cfb/ofb mode */
-
-			public IntPtr app_data;		/* application stuff */
-			public int key_len;		/* May change for variable length cipher */
-			public uint flags;	/* Various flags */
-			public IntPtr cipher_data; /* per EVP data */
-			public int final_used;
-			public int block_mask;
-
-			[MarshalAs(UnmanagedType.ByValArray, SizeConst = Native.EVP_MAX_BLOCK_LENGTH)]
-			public byte[] final;/* possible final block */
-		}
-		#endregion
+		
 
 		private Cipher cipher;
 
@@ -541,9 +734,10 @@ namespace OpenSSL.Crypto
 		/// </summary>
 		/// <param name="cipher"></param>
 		public CipherContext(Cipher cipher)
-			: base(Native.OPENSSL_malloc(Marshal.SizeOf(typeof(EVP_CIPHER_CTX))), true)
 		{
-			Native.EVP_CIPHER_CTX_init(this.ptr);
+		    this.ptr = Native.EVP_CIPHER_CTX_new();
+		    this.owner = true;
+            this.OnNewHandle(this.ptr);
 			this.cipher = cipher;
 		}
 
@@ -681,20 +875,35 @@ namespace OpenSSL.Crypto
 			return iv;
 		}
 
+        /// <summary>
+        /// Calls EVP_CipherInit_ex(), EVP_CipherUpdate(), and EVP_CipherFinal_ex()
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="key"></param>
+        /// <param name="iv"></param>
+        /// <param name="doEncrypt"></param>
+        /// <param name="padding"></param>
+        /// <returns></returns>
+        public byte[] Crypt(byte[] input, byte[] key, byte[] iv, bool doEncrypt, int padding)
+        {
+            return Crypt(input, input.Length, key, iv, doEncrypt, padding);
+        }
+
 		/// <summary>
 		/// Calls EVP_CipherInit_ex(), EVP_CipherUpdate(), and EVP_CipherFinal_ex()
 		/// </summary>
 		/// <param name="input"></param>
+		/// <param name="count"></param>
 		/// <param name="key"></param>
 		/// <param name="iv"></param>
 		/// <param name="doEncrypt"></param>
 		/// <param name="padding"></param>
 		/// <returns></returns>
-		public byte[] Crypt(byte[] input, byte[] key, byte[] iv, bool doEncrypt, int padding)
+		public byte[] Crypt(byte[] input, int count, byte[] key, byte[] iv, bool doEncrypt, int padding)
 		{
 			int enc = doEncrypt ? 1 : 0;
 
-			int total = Math.Max(input.Length, this.cipher.BlockSize);
+            int total = Math.Max(count, this.cipher.BlockSize);
 			byte[] real_key = SetupKey(key);
 			byte[] real_iv = SetupIV(iv);
 
@@ -726,7 +935,7 @@ namespace OpenSSL.Crypto
 				Native.ExpectSuccess(Native.EVP_CIPHER_CTX_set_padding(this.ptr, padding));
 
 			int len = 0;
-			Native.ExpectSuccess(Native.EVP_CipherUpdate(this.ptr, buf, out len, input, input.Length));
+            Native.ExpectSuccess(Native.EVP_CipherUpdate(this.ptr, buf, out len, input, count));
 
 			memory.Write(buf, 0, len);
 
@@ -839,11 +1048,6 @@ namespace OpenSSL.Crypto
 			get { return (this.cipher.Flags & Native.EVP_CIPH_MODE) == Native.EVP_CIPH_STREAM_CIPHER; }
 		}
 
-		private EVP_CIPHER_CTX Raw
-		{
-			get { return (EVP_CIPHER_CTX)Marshal.PtrToStructure(this.ptr, typeof(EVP_CIPHER_CTX)); }
-			set { Marshal.StructureToPtr(value, this.ptr, false); }
-		}
 		#endregion
 
 		#region IDisposable Members
@@ -851,9 +1055,9 @@ namespace OpenSSL.Crypto
 		/// <summary>
 		/// Calls EVP_CIPHER_CTX_clean() and then OPENSSL_free()
 		/// </summary>
-		protected override void OnDispose() {
-			Native.EVP_CIPHER_CTX_cleanup(this.ptr);
-			Native.OPENSSL_free(this.ptr);
+		protected override void OnDispose()
+		{
+		    Native.EVP_CIPHER_CTX_free(this.ptr);
 		}
 
 		#endregion

@@ -14,7 +14,7 @@ namespace UnitTests
 		[Test]
 		public void TestEncryptDecrypt()
 		{
-			string inputMsg = "This is a message";
+            string inputMsg = "The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog. The quick brown fox jumped over the lazy dog.";
 			byte[] input = Encoding.ASCII.GetBytes(inputMsg);
 			byte[] iv = Encoding.ASCII.GetBytes("12345678");
 			byte[] key = Encoding.ASCII.GetBytes("This is the key");
@@ -25,14 +25,22 @@ namespace UnitTests
 					Console.Write(" KeyLength: {0}, IVLength: {1}, BlockSize: {2}, Stream: {3} ",
 					              cipher.KeyLength, cipher.IVLength, cipher.BlockSize, cc.IsStream);
 
-					var pt = cc.Encrypt(input, key, iv);
-					if (cipher != Cipher.Null)
-						Assert.AreNotEqual(input, pt);
-					
-					var ct = cc.Decrypt(pt, key, iv);
-					var msg = Encoding.ASCII.GetString(ct);
-					Console.WriteLine("\"{0}\"", msg);
-					Assert.AreEqual(inputMsg, msg);
+                    EncryptCipherContext ec = new EncryptCipherContext(cipher, key, iv, -1);
+                    DecryptCipherContext dc = new DecryptCipherContext(cipher, key, iv, -1);
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var pt = ec.Encrypt(input, input.Length);
+                        if (cipher != Cipher.Null)
+                            Assert.AreNotEqual(input, pt);
+
+                        var ct = dc.Decrypt(pt, pt.Length);
+                        var msg = Encoding.ASCII.GetString(ct);
+                        Console.WriteLine("\"{0}\"", msg);
+                        Assert.AreEqual(inputMsg, msg);
+                    }
+				    dc.Dispose();
+                    ec.Dispose();
 				}
 			}
 		}

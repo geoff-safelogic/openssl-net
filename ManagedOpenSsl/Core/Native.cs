@@ -221,7 +221,7 @@ namespace OpenSSL.Core
 		#endregion
 
 		#region Version
-		public const uint Wrapper = 0x10000000;
+		public const uint Wrapper = 0x10001000;
 
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static string SSLeay_version(int type);
@@ -1504,6 +1504,8 @@ namespace OpenSSL.Core
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static IntPtr EVP_aes_128_ofb();
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
+        public extern static IntPtr EVP_aes_128_xts();
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
 		public extern static IntPtr EVP_aes_192_ecb();
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static IntPtr EVP_aes_192_cbc();
@@ -1527,6 +1529,8 @@ namespace OpenSSL.Core
 		public extern static IntPtr EVP_aes_256_cfb128();
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static IntPtr EVP_aes_256_ofb();
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static IntPtr EVP_aes_256_xts();
 
 		#endregion
 
@@ -1594,6 +1598,13 @@ namespace OpenSSL.Core
 		#endregion
 
 		#region EVP_CIPHER
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static IntPtr EVP_CIPHER_CTX_new();
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static IntPtr EVP_CIPHER_CTX_free(IntPtr ctx);
+
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static void EVP_CIPHER_CTX_init(IntPtr a);
 
@@ -1636,14 +1647,23 @@ namespace OpenSSL.Core
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static int EVP_SealFinal(IntPtr ctx, byte[] outb, out int outl);
 
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int EVP_DecryptInit_ex(IntPtr ctx, IntPtr cipher, IntPtr impl, byte[] key, byte[] iv);
+
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static int EVP_DecryptUpdate(IntPtr ctx, byte[] output, out int outl, byte[] input, int inl);
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int EVP_DecryptFinal_ex(IntPtr ctx, byte[] outm, ref int outl);
 
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static int EVP_EncryptInit_ex(IntPtr ctx, IntPtr cipher, IntPtr impl, byte[] key, byte[] iv);
 
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static int EVP_EncryptUpdate(IntPtr ctx, byte[] output, out int outl, byte[] input, int inl);
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int EVP_EncryptFinal_ex(IntPtr ctx, byte[] outm, ref int outl);
 
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static int EVP_BytesToKey(IntPtr type, IntPtr md, byte[] salt, byte[] data, int datal, int count, byte[] key, byte[] iv);

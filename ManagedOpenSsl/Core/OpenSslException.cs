@@ -95,7 +95,10 @@ namespace OpenSSL.Core
 					if (buf[len] == 0)
 						break;
 				}
-				return Encoding.ASCII.GetString(buf, 0, len);
+                if (len == 0)
+                    return err.ToString();
+                else
+				    return err.ToString() + " " + Encoding.ASCII.GetString(buf, 0, len);
 			}
 		}
 	}

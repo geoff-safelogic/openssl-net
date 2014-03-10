@@ -256,7 +256,7 @@ namespace OpenSSL.Core
 			byte[] buf = new byte[count];
 			int ret = Native.BIO_read(this.ptr, buf, buf.Length);
 			if (ret < 0)
-				throw new OpenSslException();
+				throw new Exception("Expected " + count + " bytes but received " + ret);
 
 			return new ArraySegment<byte>(buf, 0, ret);
 		}
