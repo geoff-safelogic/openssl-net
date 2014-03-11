@@ -25,10 +25,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 using OpenSSL;
 using OpenSSL.Crypto;
 using NUnit.Framework;
+using SHA256 = OpenSSL.Crypto.SHA256;
 
 namespace UnitTests
 {
@@ -86,6 +88,177 @@ namespace UnitTests
 			using (MessageDigestContext ctx = new MessageDigestContext(MessageDigest.SHA224))
 				this.GenericTest("SHA-224", ctx, this.addenum);
 		}
+
+        [Test]
+	    public void LowLevelTest()
+	    {
+	        SHA256 sha = new SHA256();
+            sha.Init();
+
+            byte[] msg = Encoding.ASCII.GetBytes(
+                "abcdbcde" + "cdefdefg" + "efghfghi" +
+                "ghijhijk" + "ijkljklm" + "klmnlmno" + "mnopnopq");
+
+            sha.Update(msg);
+
+            byte[] context = sha.GetContext();
+
+            byte[] hash = sha.Final();
+
+            SHA256Cng cng = new SHA256Cng();
+            byte[] managed = cng.ComputeHash(msg);
+
+            Assert.AreEqual(hash, managed);
+	    }
+
+        [Test]
+	    public void LowLevelContextTest()
+	    {
+            SHA256 sha = new SHA256();
+            sha.Init();
+
+            byte[] msg = Encoding.ASCII.GetBytes(
+                "abcdbcde" + "cdefdefg" + "efghfghi" +
+                "ghijhijk" + "ijkljklm" + "klmnlmno" + "mnopnopq");
+
+            sha.Update(msg);
+
+            byte[] context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+
+            byte[] hash = sha.Final();
+
+            SHA256Cng cng = new SHA256Cng();
+            byte[] managed = cng.ComputeHash(msg);
+
+            Assert.AreEqual(hash, managed);
+	    }
+
+        [Test]
+	    public void MultiBuffTest()
+	    {
+            byte[] msg = Encoding.ASCII.GetBytes(
+                "abcdbcde" + "cdefdefg" + "efghfghi" +
+                "ghijhijk" + "ijkljklm" + "klmnlmno" + "mnopnopq");
+
+            byte[] msg1 = Encoding.ASCII.GetBytes("abcdbcde");
+
+            byte[] msg2 = Encoding.ASCII.GetBytes(
+                "cdefdefg");
+
+            byte[] msg3 = Encoding.ASCII.GetBytes(
+                "efghfghi");
+
+            byte[] msg4 = Encoding.ASCII.GetBytes(
+                "ghijhijk");
+
+            byte[] msg5 = Encoding.ASCII.GetBytes(
+                "ijkljklm");
+
+            byte[] msg6 = Encoding.ASCII.GetBytes(
+                "klmnlmno");
+
+            byte[] msg7 = Encoding.ASCII.GetBytes(
+                "mnopnopq");
+
+            SHA256 sha = new SHA256();
+            sha.Init();
+
+            sha.Update(msg1);
+            sha.Update(msg2);
+            sha.Update(msg3);
+            sha.Update(msg4);
+            sha.Update(msg5);
+            sha.Update(msg6);
+            sha.Update(msg7);
+
+            byte[] hash = sha.Final();
+
+            SHA256Cng cng = new SHA256Cng();
+            byte[] managed = cng.ComputeHash(msg);
+
+            Assert.AreEqual(hash, managed);
+	    }
+
+        [Test]
+	    public void MultiBuffContextTest()
+	    {
+            byte[] msg = Encoding.ASCII.GetBytes(
+                "abcdbcde" + "cdefdefg" + "efghfghi" +
+                "ghijhijk" + "ijkljklm" + "klmnlmno" + "mnopnopq");
+
+            byte[] msg1 = Encoding.ASCII.GetBytes("abcdbcde");
+
+            byte[] msg2 = Encoding.ASCII.GetBytes(
+                "cdefdefg");
+
+            byte[] msg3 = Encoding.ASCII.GetBytes(
+                "efghfghi");
+
+            byte[] msg4 = Encoding.ASCII.GetBytes(
+                "ghijhijk");
+
+            byte[] msg5 = Encoding.ASCII.GetBytes(
+                "ijkljklm");
+
+            byte[] msg6 = Encoding.ASCII.GetBytes(
+                "klmnlmno");
+
+            byte[] msg7 = Encoding.ASCII.GetBytes(
+                "mnopnopq");
+
+            SHA256 sha = new SHA256();
+            sha.Init();
+
+            sha.Update(msg1);
+            byte[] context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+            sha.Update(msg2);
+            context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+            sha.Update(msg3);
+            context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+            sha.Update(msg4);
+            context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+            sha.Update(msg5);
+            context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+            sha.Update(msg6);
+            context = sha.GetContext();
+            sha.Dispose();
+
+            sha = new SHA256();
+            sha.SetContext(context);
+            sha.Update(msg7);
+
+            byte[] hash = sha.Final();
+            sha.Dispose();
+
+            SHA256Cng cng = new SHA256Cng();
+            byte[] managed = cng.ComputeHash(msg);
+
+            Assert.AreEqual(hash, managed);
+	    }
 
 		private void GenericTest(string name, MessageDigestContext ctx, byte[][] results)
 		{

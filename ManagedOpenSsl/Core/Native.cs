@@ -2652,6 +2652,15 @@ namespace OpenSSL.Core
 			return nid;
 		}
 		#endregion
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int SHA256_Init(IntPtr ctx);
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int SHA256_Update(IntPtr ctx, byte[] data, int length);
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int SHA256_Final(byte[] digest, IntPtr ctx);
 	}
 
 	class NameCollector
