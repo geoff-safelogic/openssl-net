@@ -138,6 +138,33 @@ namespace UnitTests
 	    }
 
         [Test]
+        public void LowLevelMultiOffsetTest()
+        {
+            SHA256 sha = new SHA256();
+            sha.Init();
+
+            byte[] msg = Encoding.ASCII.GetBytes(
+                "abcdbcde" + "cdefdefg" + "efghfghi" +
+                "ghijhijk" + "ijkljklm" + "klmnlmno" + "mnopnopq");
+
+            int offset = 0;
+            while (offset < msg.Length)
+            {
+                int length = Math.Min(msg.Length - offset,8);
+                sha.Update(msg, offset, length);
+
+                offset += length;
+            }
+
+            byte[] hash = sha.Final();
+
+            SHA256Cng cng = new SHA256Cng();
+            byte[] managed = cng.ComputeHash(msg);
+
+            Assert.AreEqual(hash, managed);
+        }
+
+        [Test]
 	    public void MultiBuffTest()
 	    {
             byte[] msg = Encoding.ASCII.GetBytes(

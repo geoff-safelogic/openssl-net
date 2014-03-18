@@ -33,7 +33,25 @@ namespace OpenSSL.Crypto
 
         public void Update(byte[] data)
         {
-            Native.ExpectSuccess(Native.SHA256_Update(_ctx, data, data.Length));
+            Update(data, data.Length);
+        }
+
+        public void Update(byte[] data, int length)
+        {
+            Native.ExpectSuccess(Native.SHA256_Update(_ctx, data, length));
+        }
+
+        public unsafe void Update(byte[] data, int offset, int length)
+        {
+            if (offset == 0)
+                Update(data, length);
+            else
+            {
+                fixed (byte* p = &data[offset])
+                {
+                    Native.ExpectSuccess(Native.SHA256_Update(_ctx, (IntPtr)p, length));
+                }
+            }
         }
 
         public byte[] GetContext()

@@ -2660,6 +2660,9 @@ namespace OpenSSL.Core
         public extern static int SHA256_Update(IntPtr ctx, byte[] data, int length);
 
         [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+        public extern static int SHA256_Update(IntPtr ctx, IntPtr data, int length);
+
+        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
         public extern static int SHA256_Final(byte[] digest, IntPtr ctx);
 	}
 
