@@ -111,10 +111,10 @@ namespace UnitTests
 					testName = "IntermediateServerTest";
 					AcceptConnection(); // sets the client member
 					sslStream = new SslStream(client.GetStream(), false);
-					sslStream.AuthenticateAsServer(testServer.serverCertificate, false, null, SslProtocols.Tls, SslStrength.All, false);
+					sslStream.AuthenticateAsServer(testServer.serverCertificate, false, null, SslProtocols.Tls12, SslStrength.All, false);
 
 					// Verify protocol
-					if (sslStream.SslProtocol != SslProtocols.Tls) {
+					if (sslStream.SslProtocol != SslProtocols.Tls12) {
 						Console.WriteLine("{0} failed - negotiated non Tls connection", testName);
 						Shutdown(false);
 						return;
@@ -154,7 +154,7 @@ namespace UnitTests
 					testName = "AdvancedServerTest";
 					AcceptConnection(); // sets the client member
 					sslStream = new SslStream(client.GetStream(), false, serverRemoteCertificateValidationCallback);
-					sslStream.AuthenticateAsServer(testServer.serverCertificate, true, testServer.serverCAChain, SslProtocols.Tls, SslStrength.All, true);
+					sslStream.AuthenticateAsServer(testServer.serverCertificate, true, testServer.serverCAChain, SslProtocols.Tls12, SslStrength.All, true);
 
 					// Verify mutual authentication
 					if (!sslStream.IsMutuallyAuthenticated) {
@@ -164,7 +164,7 @@ namespace UnitTests
 					}
 
 					// Verify protocol
-					if (sslStream.SslProtocol != SslProtocols.Tls) {
+					if (sslStream.SslProtocol != SslProtocols.Tls12) {
 						Console.WriteLine("{0} failed - negotiated non Tls connection", testName);
 						Shutdown(false);
 						return;
@@ -252,8 +252,8 @@ namespace UnitTests
 					testName = "IntermediateClientTest";
 					client = new TcpClient("localhost", 9000);
 					sslStream = new SslStream(client.GetStream(), false);
-					sslStream.AuthenticateAsClient("localhost", null, null, SslProtocols.Tls, SslStrength.Medium | SslStrength.High, false);
-					if (sslStream.SslProtocol != SslProtocols.Tls) {
+					sslStream.AuthenticateAsClient("localhost", null, null, SslProtocols.Tls12, SslStrength.Medium | SslStrength.High, false);
+					if (sslStream.SslProtocol != SslProtocols.Tls12) {
 						Console.WriteLine("{0} failed - negotiated a non Tls connection", testName);
 						Shutdown(false);
 						return;
@@ -380,7 +380,7 @@ namespace UnitTests
 					// Create the SslStream object with the certificate callbacks
 					sslStream = new SslStream(client.GetStream(), false, clientRemoteCertificateValidationCallback, clientLocalCertificateSelectionCallback);
 					// Initialize with client certificate list, and client CA chain
-					sslStream.AuthenticateAsClient("localhost", testServer.clientCertificateList, testServer.clientCAChain, SslProtocols.Tls, SslStrength.Medium | SslStrength.High, true);
+					sslStream.AuthenticateAsClient("localhost", testServer.clientCertificateList, testServer.clientCAChain, SslProtocols.Tls12, SslStrength.Medium | SslStrength.High, true);
 
 					// Verify mutual authentication
 					if (!sslStream.IsMutuallyAuthenticated) {
@@ -388,7 +388,7 @@ namespace UnitTests
 						Shutdown(false);
 					}
 					// Verify protocol
-					if (sslStream.SslProtocol != SslProtocols.Tls) {
+					if (sslStream.SslProtocol != SslProtocols.Tls12) {
 						Console.WriteLine("{0} failed - negotiated a non Tls connection", testName);
 						Shutdown(false);
 					}
@@ -606,11 +606,11 @@ namespace UnitTests
 				}
 				else if (testName == "IntermediateAsyncServerTest") {
 					sslStream = new SslStream(client.GetStream(), false);
-					sslStream.BeginAuthenticateAsServer(testServer.serverCertificate, false, null, SslProtocols.Tls, SslStrength.All, false, new AsyncCallback(OnAsyncAuthenticateAsServer), null);
+					sslStream.BeginAuthenticateAsServer(testServer.serverCertificate, false, null, SslProtocols.Tls12, SslStrength.All, false, new AsyncCallback(OnAsyncAuthenticateAsServer), null);
 				}
 				else if (testName == "AdvancedAsyncServerTest") {
 					sslStream = new SslStream(client.GetStream(), false, serverRemoteCertificateValidationCallback);
-					sslStream.BeginAuthenticateAsServer(testServer.serverCertificate, true, testServer.serverCAChain, SslProtocols.Tls, SslStrength.All, true, new AsyncCallback(OnAsyncAuthenticateAsServer), null);
+					sslStream.BeginAuthenticateAsServer(testServer.serverCertificate, true, testServer.serverCAChain, SslProtocols.Tls12, SslStrength.All, true, new AsyncCallback(OnAsyncAuthenticateAsServer), null);
 				}
 			}
 
@@ -619,7 +619,7 @@ namespace UnitTests
 					sslStream.EndAuthenticateAsServer(ar);
 					if (testName == "IntermediateAsyncServerTest" || testName == "AdvancedAsyncServerTest") {
 						// Verify protocol
-						if (sslStream.SslProtocol != SslProtocols.Tls) {
+						if (sslStream.SslProtocol != SslProtocols.Tls12) {
 							Console.WriteLine("{0} failed - negotiated non Tls connection", testName);
 							Shutdown(false);
 							return;
@@ -712,11 +712,11 @@ namespace UnitTests
 				}
 				else if (testName == "IntermediateAsyncClientTest") {
 					sslStream = new SslStream(client.GetStream(), false);
-					sslStream.BeginAuthenticateAsClient("localhost", null, null, SslProtocols.Tls, SslStrength.Medium | SslStrength.High, false, new AsyncCallback(OnAsyncAuthenticateAsClient), null);
+					sslStream.BeginAuthenticateAsClient("localhost", null, null, SslProtocols.Tls12, SslStrength.Medium | SslStrength.High, false, new AsyncCallback(OnAsyncAuthenticateAsClient), null);
 				}
 				else if (testName == "AdvancedAsyncClientTest") {
 					sslStream = new SslStream(client.GetStream(), false, clientRemoteCertificateValidationCallback, clientLocalCertificateSelectionCallback);
-					sslStream.BeginAuthenticateAsClient("localhost", testServer.clientCertificateList, testServer.clientCAChain, SslProtocols.Tls, SslStrength.Medium | SslStrength.High, true, new AsyncCallback(OnAsyncAuthenticateAsClient), null);
+					sslStream.BeginAuthenticateAsClient("localhost", testServer.clientCertificateList, testServer.clientCAChain, SslProtocols.Tls12, SslStrength.Medium | SslStrength.High, true, new AsyncCallback(OnAsyncAuthenticateAsClient), null);
 				}
 			}
 
@@ -724,7 +724,7 @@ namespace UnitTests
 				try {
 					sslStream.EndAuthenticateAsClient(ar);
 					if (testName == "IntermediateAsyncClientTest" || testName == "AdvancedAsyncClientTest") {
-						if (sslStream.SslProtocol != SslProtocols.Tls) {
+						if (sslStream.SslProtocol != SslProtocols.Tls12) {
 							Console.WriteLine("{0} failed - negotiated a non Tls connection", testName);
 							Shutdown(false);
 							return;
@@ -826,7 +826,6 @@ namespace UnitTests
 		}
 		
 		[Test]
-		[Ignore]
 		public void TestCase() {
 			string serverCertPath = @"../../test/certs/server.pfx";
 			string serverPrivateKeyPassword = "p@ssw0rd";
