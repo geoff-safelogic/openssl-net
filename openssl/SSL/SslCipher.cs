@@ -222,13 +222,9 @@ namespace OpenSSL.SSL
 			int keyLength = ExportKeyLength(raw.algorithms, raw.algo_strength);
 
 			// Get the SSL Protocol version
-			if ((raw.algorithms & SSL_SSLV2) == SSL_SSLV2)
+			if ((raw.algorithms & SSL_SSLV3) == SSL_SSLV3)
 			{
-				sslProtocol = SslProtocols.Ssl2;
-			}
-			else if ((raw.algorithms & SSL_SSLV3) == SSL_SSLV3)
-			{
-				sslProtocol = SslProtocols.Tls10; // SSL3 & TLS are the same here...
+				sslProtocol = SslProtocols.Ssl3; // SSL3 & TLS are the same here...
 			}
 
 			// set the keyExchange strength

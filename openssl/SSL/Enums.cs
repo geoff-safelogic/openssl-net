@@ -158,23 +158,19 @@ namespace OpenSSL.SSL
 		/// <summary>
 		/// 
 		/// </summary>
-		Ssl2 = 1,
+		Ssl3 = 1,
 		/// <summary>
 		/// 
 		/// </summary>
-		Ssl3 = 2,
+		Tls10 = 2,
 		/// <summary>
 		/// 
 		/// </summary>
-		Tls10 = 4,
+		Tls11 = 4,
 		/// <summary>
 		/// 
 		/// </summary>
-		Tls11 = 5,
-		/// <summary>
-		/// 
-		/// </summary>
-		Tls12 = 6,
+		Tls12 = 8,
 		/// <summary>
 		/// 
 		/// </summary>
@@ -281,6 +277,8 @@ namespace OpenSSL.SSL
 		SSL_OP_NO_SSLv2 = 0x01000000,
 		SSL_OP_NO_SSLv3 = 0x02000000,
 		SSL_OP_NO_TLSv1 = 0x04000000,
+		SSL_OP_NO_TLSv1_1 = 0x10000000,
+		SSL_OP_NO_TLSv1_2 = 0x08000000,
 
 		/* The next flag deliberately changes the ciphertest, this is a check
 		 * for the PKCS#1 attack */
