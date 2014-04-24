@@ -67,25 +67,25 @@ namespace OpenSSL.SSL
 		{
 			// Initialize the context with the specified ssl version
 			// Initialize the context
-			sslContext = new SslContext(SslMethod.TLSv1_2_client_method);
+			sslContext = new SslContext(SslMethod.SSLv23_client_method);
 
-			// Remove support for protocols not specified in the enabledSslProtocols
-			if ((enabledSslProtocols & SslProtocols.Ssl2) != SslProtocols.Ssl2)
+			sslContext.Options |= SslOptions.SSL_OP_NO_SSLv2;
+			if (enabledSslProtocols.HasFlag(SslProtocols.Ssl3) == false)
 			{
-				sslContext.Options |= SslOptions.SSL_OP_NO_SSLv2;
-			}
-			if ((enabledSslProtocols & SslProtocols.Ssl3) != SslProtocols.Ssl3 &&
-				((enabledSslProtocols & SslProtocols.Default) != SslProtocols.Default))
-			{
-				// no SSLv3 support
 				sslContext.Options |= SslOptions.SSL_OP_NO_SSLv3;
 			}
-			if ((enabledSslProtocols & SslProtocols.Tls10) != SslProtocols.Tls10 &&
-				(enabledSslProtocols & SslProtocols.Default) != SslProtocols.Default)
+			if (enabledSslProtocols.HasFlag(SslProtocols.Tls10) == false && enabledSslProtocols.HasFlag(SslProtocols.Default) == false)
 			{
 				sslContext.Options |= SslOptions.SSL_OP_NO_TLSv1;
 			}
-
+			if (enabledSslProtocols.HasFlag(SslProtocols.Tls11) == false && enabledSslProtocols.HasFlag(SslProtocols.Default) == false)
+			{
+				sslContext.Options |= SslOptions.SSL_OP_NO_TLSv1_1;
+			}
+			if (enabledSslProtocols.HasFlag(SslProtocols.Tls12) == false && enabledSslProtocols.HasFlag(SslProtocols.Default) == false)
+			{
+				sslContext.Options |= SslOptions.SSL_OP_NO_TLSv1_2;
+			}
 			// Set the Local certificate selection callback
 			sslContext.SetClientCertCallback(this.internalCertificateSelectionCallback);
 			// Set the enabled cipher list

@@ -129,47 +129,29 @@ namespace OpenSSL.SSL
             }
 
             // Initialize the context
-            sslContext = new SslContext(SslMethod.TLSv1_2_server_method);
-            
+			sslContext = new SslContext(SslMethod.SSLv23_server_method);
+
             // Remove support for protocols not specified in the enabledSslProtocols
-            if ((enabledSslProtocols & SslProtocols.Ssl2) != SslProtocols.Ssl2)
+			sslContext.Options |= SslOptions.SSL_OP_NO_SSLv2;
+			if (enabledSslProtocols.HasFlag(SslProtocols.Ssl3) == false)
             {
-                sslContext.Options |= SslOptions.SSL_OP_NO_SSLv2;
-            }
-            if ((enabledSslProtocols & SslProtocols.Ssl3) != SslProtocols.Ssl3 &&
-                ((enabledSslProtocols & SslProtocols.Default) != SslProtocols.Default))
-            {
-                // no SSLv3 support
                 sslContext.Options |= SslOptions.SSL_OP_NO_SSLv3;
             }
-			if ((enabledSslProtocols & SslProtocols.Tls10) != SslProtocols.Tls10 &&
-                (enabledSslProtocols & SslProtocols.Default) != SslProtocols.Default)
-            {
+			if (enabledSslProtocols.HasFlag(SslProtocols.Tls10) == false && enabledSslProtocols.HasFlag(SslProtocols.Default) == false)
+			{
                 sslContext.Options |= SslOptions.SSL_OP_NO_TLSv1;
             }
-            /*
-            // Initialize the context with the specified ssl version
-            switch (enabledSslProtocols)
-            {
-                case SslProtocols.None:
-                    throw new ArgumentException("SslProtocol.None is not supported", "enabledSslProtocols");
-                    break;
-                case SslProtocols.Ssl2:
-                    sslContext = new SslContext(SslMethod.SSLv2_server_method);
-                    break;
-                case SslProtocols.Ssl3:
-                case SslProtocols.Default:
-                    sslContext = new SslContext(SslMethod.SSLv3_server_method);
-                    break;
-                case SslProtocols.Tls:
-                    sslContext = new SslContext(SslMethod.TLSv1_server_method);
-                    break;
-            }
-            */
-            // Set the context mode
+			if (enabledSslProtocols.HasFlag(SslProtocols.Tls11) == false && enabledSslProtocols.HasFlag(SslProtocols.Default) == false)
+			{
+				sslContext.Options |= SslOptions.SSL_OP_NO_TLSv1_1;
+			}
+			if (enabledSslProtocols.HasFlag(SslProtocols.Tls12) == false && enabledSslProtocols.HasFlag(SslProtocols.Default) == false)
+			{
+				sslContext.Options |= SslOptions.SSL_OP_NO_TLSv1_2;
+			}
+            
+			// Set the context mode
             sslContext.Mode = SslMode.SSL_MODE_AUTO_RETRY;
-            // Set the workaround options
-            //sslContext.Options = SslOptions.SSL_OP_ALL;
             // Set the client certificate verification callback if we are requiring client certs
             if (clientCertificateRequired)
             {
