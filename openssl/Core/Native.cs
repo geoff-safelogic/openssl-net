@@ -122,8 +122,8 @@ namespace OpenSSL.Core
 		/// This is the name of the DLL that P/Invoke loads and tries to bind all of
 		/// these native functions to.
 		/// </summary>
-		const string DLLNAME = "libcrypto";
-		const string SSLDLLNAME = "libssl";
+		const string DLLNAME = "libeay32.dll";
+		const string SSLDLLNAME = "ssleay32.dll";
 
 		#region Delegates
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -2275,6 +2275,8 @@ namespace OpenSSL.Core
 		#region FIPS
 		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
 		public extern static int FIPS_mode_set(int onoff);
+		[DllImport(DLLNAME, CallingConvention=CallingConvention.Cdecl)]
+		public extern static int FIPS_mode();
 
 		#endregion
 
